@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Dark green rounded background -->
+  <rect x="0" y="0" width="1024" height="1024" rx="180" ry="180" fill="#2E7D32"/>
+
+  <!-- Left hammer (rotated -45 degrees around center) -->
+  <g transform="rotate(-45, 512, 512)">
+    <!-- Handle (pill shape) -->
+    <rect x="472" y="420" width="80" height="400" rx="40" ry="40" fill="#81C784" stroke="#388E3C" stroke-width="10"/>
+    <!-- Head (rectangular block) -->
+    <rect x="412" y="280" width="200" height="160" rx="24" ry="24" fill="#90EE90" stroke="#388E3C" stroke-width="10"/>
+  </g>
+
+  <!-- Right hammer (rotated +45 degrees around center) -->
+  <g transform="rotate(45, 512, 512)">
+    <!-- Handle (pill shape) -->
+    <rect x="472" y="420" width="80" height="400" rx="40" ry="40" fill="#81C784" stroke="#388E3C" stroke-width="10"/>
+    <!-- Head (rectangular block) -->
+    <rect x="412" y="280" width="200" height="160" rx="24" ry="24" fill="#90EE90" stroke="#388E3C" stroke-width="10"/>
+  </g>
+</svg>
