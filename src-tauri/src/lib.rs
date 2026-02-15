@@ -1,4 +1,4 @@
-use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::{Manager, WebviewUrl};
 
 const RELOAD_MENU_ID: &str = "reload_page";
@@ -11,28 +11,49 @@ fn should_handle_reload(event_id: &str) -> bool {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .menu(|app| {
+            let app_submenu = SubmenuBuilder::new(app, "Wizard")
+                .separator()
+                .services()
+                .separator()
+                .hide()
+                .hide_others()
+                .show_all()
+                .separator()
+                .quit()
+                .build()?;
+
+            let edit_submenu = SubmenuBuilder::new(app, "Edit")
+                .undo()
+                .redo()
+                .separator()
+                .cut()
+                .copy()
+                .paste()
+                .select_all()
+                .build()?;
+
+            let reload_item = MenuItemBuilder::new("Reload Page")
+                .id(RELOAD_MENU_ID)
+                .accelerator("CmdOrCtrl+R")
+                .build(app)?;
+
+            let view_submenu = SubmenuBuilder::new(app, "View")
+                .item(&reload_item)
+                .separator()
+                .fullscreen()
+                .build()?;
+
+            let window_submenu = SubmenuBuilder::new(app, "Window")
+                .minimize()
+                .close_window()
+                .build()?;
+
+            MenuBuilder::new(app)
+                .items(&[&app_submenu, &edit_submenu, &view_submenu, &window_submenu])
+                .build()
+        })
         .setup(|app| {
-            // Build native menu bar
-            let app_submenu = Submenu::with_items(
-                app,
-                "Wizard",
-                true,
-                &[&PredefinedMenuItem::quit(app, Some("Quit Wizard"))?],
-            )?;
-
-            let reload_item = MenuItem::with_id(
-                app,
-                RELOAD_MENU_ID,
-                "Reload Page",
-                true,
-                Some("CmdOrCtrl+R"),
-            )?;
-            let view_submenu =
-                Submenu::with_items(app, "View", true, &[&reload_item])?;
-
-            let menu = Menu::with_items(app, &[&app_submenu, &view_submenu])?;
-            app.set_menu(menu)?;
-
             // Create a window pointing at the external URL
             let url = WebviewUrl::External("http://wizard.local:9000/".parse().unwrap());
             tauri::WebviewWindowBuilder::new(app, "main", url)
