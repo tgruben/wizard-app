@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Settings</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      margin: 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      font-size: 13px;
+    }
+    input[type="url"] {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 13px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .error {
+      color: #c00;
+      font-size: 12px;
+      margin-top: 4px;
+      min-height: 16px;
+    }
+    .buttons {
+      margin-top: 16px;
+      text-align: right;
+    }
+    button {
+      padding: 5px 16px;
+      font-size: 13px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #fff;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    button.primary {
+      background: #007aff;
+      color: #fff;
+      border-color: #007aff;
+    }
+  </style>
+</head>
+<body>
+  <label for="endpoint-url">Endpoint URL</label>
+  <input type="url" id="endpoint-url" placeholder="http://example.com:9000/">
+  <div class="error" id="error"></div>
+  <div class="buttons">
+    <button id="cancel-btn">Cancel</button>
+    <button id="save-btn" class="primary">Save</button>
+  </div>
+  <script>
+    const { invoke } = window.__TAURI__.core;
+    const urlInput = document.getElementById('endpoint-url');
+    const errorDiv = document.getElementById('error');
+
+    async function init() {
+      try {
+        const url = await invoke('get_endpoint_url');
+        urlInput.value = url;
+      } catch (e) {
+        errorDiv.textContent = 'Failed to load settings';
+      }
+      urlInput.focus();
+      urlInput.select();
+    }
+
+    document.getElementById('save-btn').addEventListener('click', async () => {
+      errorDiv.textContent = '';
+      try {
+        await invoke('set_endpoint_url', { url: urlInput.value });
+        await invoke('close_settings_window');
+      } catch (e) {
+        errorDiv.textContent = e;
+      }
+    });
+
+    document.getElementById('cancel-btn').addEventListener('click', async () => {
+      await invoke('close_settings_window');
+    });
+
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('save-btn').click();
+      if (e.key === 'Escape') document.getElementById('cancel-btn').click();
+    });
+
+    init();
+  </script>
+</body>
+</html>
