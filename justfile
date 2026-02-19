@@ -1,24 +1,28 @@
 # Wizard App — Tauri v2
 
-app_name := "Wizard"
+export PATH := env('HOME') / ".cargo/bin:" + env('PATH')
+
 bundle_dir := "src-tauri/target/release/bundle/macos"
+
+wizard_name := "Wizard"
+wizard_url := "http://wizard.local:9000/"
 
 # Development mode
 dev:
-    cd src-tauri && cargo tauri dev
+    cd src-tauri && DEFAULT_ENDPOINT_URL="{{wizard_url}}" cargo tauri dev
 
 # Release build
 build:
-    cd src-tauri && cargo tauri build
+    cd src-tauri && DEFAULT_ENDPOINT_URL="{{wizard_url}}" cargo tauri build --bundles app
 
-# Build and copy Wizard.app to /Applications
+# Build and install Wizard.app to /Applications
 install: build
-    @echo "Installing {{app_name}}.app to /Applications..."
-    rm -rf "/Applications/{{app_name}}.app"
-    cp -r "{{bundle_dir}}/{{app_name}}.app" /Applications/
-    @echo "Installed to /Applications/{{app_name}}.app"
+    @echo "Installing {{wizard_name}}.app to /Applications..."
+    rm -rf "/Applications/{{wizard_name}}.app"
+    cp -r "{{bundle_dir}}/{{wizard_name}}.app" /Applications/
+    @echo "Installed to /Applications/{{wizard_name}}.app"
 
 # Remove Wizard.app from /Applications
 uninstall:
-    rm -rf "/Applications/{{app_name}}.app"
-    @echo "Removed /Applications/{{app_name}}.app"
+    rm -rf "/Applications/{{wizard_name}}.app"
+    @echo "Removed /Applications/{{wizard_name}}.app"

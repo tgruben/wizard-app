@@ -1,7 +1,7 @@
 {
   "identifier": "default",
   "description": "Default capabilities for wizard app",
-  "windows": ["main"],
+  "windows": ["main", "settings"],
   "permissions": [
     "core:default"
   ]
