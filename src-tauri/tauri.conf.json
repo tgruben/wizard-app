@@ -1,12 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
   "productName": "Wizard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "com.wizard.program",
   "build": {
     "frontendDist": "../ui"
   },
   "bundle": {
+    "active": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
