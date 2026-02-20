@@ -1,4 +1,5 @@
 mod commands;
+mod icon;
 mod settings;
 
 use std::process::Command;
@@ -23,7 +24,7 @@ fn open_settings_window(app: &tauri::AppHandle) {
     let url = WebviewUrl::App("settings.html".into());
     let _ = WebviewWindowBuilder::new(app, "settings", url)
         .title("Settings")
-        .inner_size(400.0, 160.0)
+        .inner_size(400.0, 280.0)
         .resizable(false)
         .build();
 }
@@ -91,8 +92,12 @@ pub fn run() {
                 .clone()
                 .unwrap_or_else(|| "Wizard".to_string());
 
-            // Load persisted URL and create main window
-            let endpoint_url = settings::load_settings(handle).endpoint_url;
+            // Load persisted settings
+            let loaded = settings::load_settings(handle);
+            let endpoint_url = loaded.endpoint_url;
+
+            // Apply persisted dock icon color
+            icon::set_dock_icon(handle, &loaded.icon_color);
             let url = WebviewUrl::External(endpoint_url.parse().unwrap());
             WebviewWindowBuilder::new(app, "main", url)
                 .title(&app_name)
@@ -118,6 +123,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_endpoint_url,
             commands::set_endpoint_url,
+            commands::get_icon_color,
+            commands::set_icon_color,
             commands::close_settings_window,
         ])
         .run(tauri::generate_context!())

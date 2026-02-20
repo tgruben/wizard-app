@@ -29,6 +29,43 @@
       margin-top: 4px;
       min-height: 16px;
     }
+    .icon-color-section {
+      margin-top: 16px;
+    }
+    .color-swatches {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.15s;
+    }
+    .swatch:hover {
+      opacity: 0.85;
+    }
+    .swatch.selected {
+      border-color: #333;
+    }
+    .swatch .check {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(255,255,255,0.9);
+      font-size: 18px;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .swatch.selected .check {
+      display: block;
+    }
     .buttons {
       margin-top: 16px;
       text-align: right;
@@ -53,6 +90,20 @@
   <label for="endpoint-url">Endpoint URL</label>
   <input type="url" id="endpoint-url" placeholder="http://example.com:9000/">
   <div class="error" id="error"></div>
+
+  <div class="icon-color-section">
+    <label>Icon Color</label>
+    <div class="color-swatches" id="color-swatches">
+      <div class="swatch" data-color="red" style="background:#e53e3e"><span class="check">&#10003;</span></div>
+      <div class="swatch" data-color="orange" style="background:#ed8936"><span class="check">&#10003;</span></div>
+      <div class="swatch" data-color="yellow" style="background:#ecc94b"><span class="check">&#10003;</span></div>
+      <div class="swatch" data-color="green" style="background:#38a169"><span class="check">&#10003;</span></div>
+      <div class="swatch" data-color="blue" style="background:#3182ce"><span class="check">&#10003;</span></div>
+      <div class="swatch" data-color="indigo" style="background:#5a67d8"><span class="check">&#10003;</span></div>
+      <div class="swatch" data-color="violet" style="background:#9f7aea"><span class="check">&#10003;</span></div>
+    </div>
+  </div>
+
   <div class="buttons">
     <button id="cancel-btn">Cancel</button>
     <button id="save-btn" class="primary">Save</button>
@@ -61,6 +112,23 @@
     const { invoke } = window.__TAURI__.core;
     const urlInput = document.getElementById('endpoint-url');
     const errorDiv = document.getElementById('error');
+    const swatches = document.querySelectorAll('.swatch');
+
+    function selectSwatch(color) {
+      swatches.forEach(s => s.classList.toggle('selected', s.dataset.color === color));
+    }
+
+    swatches.forEach(swatch => {
+      swatch.addEventListener('click', async () => {
+        const color = swatch.dataset.color;
+        selectSwatch(color);
+        try {
+          await invoke('set_icon_color', { color });
+        } catch (e) {
+          errorDiv.textContent = e;
+        }
+      });
+    });
 
     async function init() {
       try {
@@ -68,6 +136,13 @@
         urlInput.value = url;
       } catch (e) {
         errorDiv.textContent = 'Failed to load settings';
+      }
+      try {
+        const color = await invoke('get_icon_color');
+        selectSwatch(color);
+      } catch (e) {
+        // Default to green if icon color can't be loaded
+        selectSwatch('green');
       }
       urlInput.focus();
       urlInput.select();

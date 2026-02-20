@@ -9,15 +9,43 @@ const DEFAULT_ENDPOINT_URL: &str = match option_env!("DEFAULT_ENDPOINT_URL") {
 };
 const SETTINGS_FILE: &str = "settings.json";
 
+pub const DEFAULT_ICON_COLOR: &str = match option_env!("DEFAULT_ICON_COLOR") {
+    Some(color) => color,
+    None => "green",
+};
+
+pub const VALID_COLORS: &[&str] = &[
+    "red", "orange", "yellow", "green", "blue", "indigo", "violet",
+];
+
+pub fn validate_color(color: &str) -> Result<(), String> {
+    if VALID_COLORS.contains(&color) {
+        Ok(())
+    } else {
+        Err(format!(
+            "Invalid color '{}'. Valid colors: {}",
+            color,
+            VALID_COLORS.join(", ")
+        ))
+    }
+}
+
+fn default_icon_color() -> String {
+    DEFAULT_ICON_COLOR.to_string()
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
     pub endpoint_url: String,
+    #[serde(default = "default_icon_color")]
+    pub icon_color: String,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
             endpoint_url: DEFAULT_ENDPOINT_URL.to_string(),
+            icon_color: default_icon_color(),
         }
     }
 }
