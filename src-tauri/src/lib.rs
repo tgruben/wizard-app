@@ -2,9 +2,16 @@ mod commands;
 mod settings;
 
 use std::process::Command;
-use tauri::menu::{MenuItem, PredefinedMenuItem, Submenu};
+use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::webview::NewWindowResponse;
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+
+const RELOAD_MENU_ID: &str = "reload_page";
+const RELOAD_JS: &str = "window.location.reload()";
+
+fn should_handle_reload(id: &str) -> bool {
+    id == RELOAD_MENU_ID
+}
 
 fn open_settings_window(app: &tauri::AppHandle) {
     // If settings window already exists, just focus it
@@ -25,7 +32,15 @@ fn open_settings_window(app: &tauri::AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .menu(|app| {
+            let settings_item = MenuItemBuilder::new("Settings...")
+                .id("settings")
+                .accelerator("CmdOrCtrl+,")
+                .build(app)?;
+
             let app_submenu = SubmenuBuilder::new(app, "Wizard")
+                .about(None)
+                .separator()
+                .item(&settings_item)
                 .separator()
                 .services()
                 .separator()
@@ -59,6 +74,8 @@ pub fn run() {
 
             let window_submenu = SubmenuBuilder::new(app, "Window")
                 .minimize()
+                .maximize()
+                .separator()
                 .close_window()
                 .build()?;
 
@@ -67,75 +84,12 @@ pub fn run() {
                 .build()
         })
         .setup(|app| {
-            // Build menu bar
             let handle = app.handle();
             let app_name = handle
                 .config()
                 .product_name
                 .clone()
                 .unwrap_or_else(|| "Wizard".to_string());
-
-            let settings_item =
-                MenuItem::with_id(handle, "settings", "Settings...", true, Some("CmdOrCtrl+,"))?;
-
-            let app_menu = Submenu::with_items(
-                handle,
-                &app_name,
-                true,
-                &[
-                    &PredefinedMenuItem::about(handle, Some(&format!("About {app_name}")), None)?,
-                    &PredefinedMenuItem::separator(handle)?,
-                    &settings_item,
-                    &PredefinedMenuItem::separator(handle)?,
-                    &PredefinedMenuItem::services(handle, None)?,
-                    &PredefinedMenuItem::separator(handle)?,
-                    &PredefinedMenuItem::hide(handle, None)?,
-                    &PredefinedMenuItem::hide_others(handle, None)?,
-                    &PredefinedMenuItem::show_all(handle, None)?,
-                    &PredefinedMenuItem::separator(handle)?,
-                    &PredefinedMenuItem::quit(handle, None)?,
-                ],
-            )?;
-
-            let edit_menu = Submenu::with_items(
-                handle,
-                "Edit",
-                true,
-                &[
-                    &PredefinedMenuItem::undo(handle, None)?,
-                    &PredefinedMenuItem::redo(handle, None)?,
-                    &PredefinedMenuItem::separator(handle)?,
-                    &PredefinedMenuItem::cut(handle, None)?,
-                    &PredefinedMenuItem::copy(handle, None)?,
-                    &PredefinedMenuItem::paste(handle, None)?,
-                    &PredefinedMenuItem::select_all(handle, None)?,
-                ],
-            )?;
-
-            let view_menu = Submenu::with_items(
-                handle,
-                "View",
-                true,
-                &[&PredefinedMenuItem::fullscreen(handle, None)?],
-            )?;
-
-            let window_menu = Submenu::with_items(
-                handle,
-                "Window",
-                true,
-                &[
-                    &PredefinedMenuItem::minimize(handle, None)?,
-                    &PredefinedMenuItem::maximize(handle, None)?,
-                    &PredefinedMenuItem::separator(handle)?,
-                    &PredefinedMenuItem::close_window(handle, None)?,
-                ],
-            )?;
-
-            let menu = tauri::menu::Menu::with_items(
-                handle,
-                &[&app_menu, &edit_menu, &view_menu, &window_menu],
-            )?;
-            app.set_menu(menu)?;
 
             // Load persisted URL and create main window
             let endpoint_url = settings::load_settings(handle).endpoint_url;
@@ -152,8 +106,13 @@ pub fn run() {
             Ok(())
         })
         .on_menu_event(|app, event| {
-            if event.id().as_ref() == "settings" {
+            let id = event.id().as_ref();
+            if id == "settings" {
                 open_settings_window(app);
+            } else if should_handle_reload(id) {
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.eval(RELOAD_JS);
+                }
             }
         })
         .invoke_handler(tauri::generate_handler![
