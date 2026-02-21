@@ -5,7 +5,7 @@ mod settings;
 use std::process::Command;
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::webview::NewWindowResponse;
-use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{Manager, TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
 
 const RELOAD_MENU_ID: &str = "reload_page";
 const RELOAD_JS: &str = "window.location.reload()";
@@ -86,27 +86,28 @@ pub fn run() {
         })
         .setup(|app| {
             let handle = app.handle();
-            let app_name = handle
-                .config()
-                .product_name
-                .clone()
-                .unwrap_or_else(|| "Wizard".to_string());
 
             // Load persisted settings
             let loaded = settings::load_settings(handle);
-            let endpoint_url = loaded.endpoint_url;
+            let endpoint_url = loaded.endpoint_url.clone();
+            let icon_color = loaded.icon_color.clone();
 
             // Apply persisted dock icon color
-            icon::set_dock_icon(handle, &loaded.icon_color);
+            icon::set_dock_icon(handle, &icon_color);
+
             let url = WebviewUrl::External(endpoint_url.parse().unwrap());
-            WebviewWindowBuilder::new(app, "main", url)
-                .title(&app_name)
+            let window = WebviewWindowBuilder::new(app, "main", url)
+                .title(&endpoint_url)
                 .inner_size(1280.0, 800.0)
+                .title_bar_style(TitleBarStyle::Transparent)
                 .on_new_window(|url, _features| {
                     let _ = Command::new("open").arg(url.as_str()).spawn();
                     NewWindowResponse::Deny
                 })
                 .build()?;
+
+            // Apply persisted title bar color
+            icon::set_titlebar_color(&window, &icon_color);
 
             Ok(())
         })
