@@ -17,12 +17,13 @@ pub fn set_endpoint_url(app: tauri::AppHandle, url: String) -> Result<(), String
 
     // Load existing settings to preserve other fields
     let mut current = settings::load_settings(&app);
-    current.endpoint_url = url;
+    current.endpoint_url = url.clone();
     settings::save_settings(&app, &current)?;
 
-    // Navigate the main window to the new URL
+    // Navigate the main window to the new URL and update title
     if let Some(main_window) = app.get_webview_window("main") {
         main_window.navigate(parsed).map_err(|e| e.to_string())?;
+        let _ = main_window.set_title(&url);
     }
 
     Ok(())
@@ -44,6 +45,11 @@ pub fn set_icon_color(app: tauri::AppHandle, color: String) -> Result<(), String
 
     // Update dock icon immediately
     icon::set_dock_icon(&app, &color);
+
+    // Update title bar color on main window
+    if let Some(main_window) = app.get_webview_window("main") {
+        icon::set_titlebar_color(&main_window, &color);
+    }
 
     Ok(())
 }
